@@ -3,40 +3,62 @@ import os
 import csv
 import mysql.connector
 from pathlib import Path
+import logging
 
 load_dotenv()
+#Configuracion basica para los logs
+logging.basicConfig(
+    filename='errores_importacion.log',           # Nombre del archivo log
+    filemode='a',                 # 'a' para anexar, 'w' para sobrescribir
+    format='%(asctime)s - %(levelname)s - %(message)s', # Formato
+    level=logging.INFO            # Nivel mínimo a registrar
+)
+
 #variables para conexion
 host = os.getenv("DB_HOST")
 username = os.getenv("DB_USERNAME")
 pasword = os.getenv("DB_PASSWORD")
 database = os.getenv("DB_DATABASE")
 
-archivo = Path(__file__).parent.parent / "nomina_sucia.csv"
+archivo = Path(__file__).parent.parent / "nomina_corrupta.csv"
 
 def limpiezaDatos(archivo):
     lista_limpia = []
+    correctos = 0
+    errores = 0
     
     try:
         with archivo.open("r",encoding="utf-8-sig") as file:
             contenido = csv.DictReader(file)
         
             for fila in contenido:
-                codigo = fila['codigo']
-                nombres = fila['nombre'].title()
-                departamentos = fila['departamento'].strip()
-                salario_bruto = float(fila['salario_bruto'])
-                
-                
-                if departamentos in("IT","Informática"):
-                    departamentos = "Tecnología"
+                try:
+                    codigo = fila['codigo_empleado']
+                    nombres = fila['nombre_completo'].title()
+                    departamentos = fila['departamento'].strip()
+                    salario_bruto = float(fila['salario_neto'])
                     
-                lista_limpia.append({
-                    "codigo": codigo,
-                    "nombres":nombres,
-                    "departamento":departamentos,
-                    "salario_bruto":salario_bruto
-                })
-        
+                    if codigo is None or codigo.strip() == "":
+                        logging.error("Fila saltada por datos incompletos", exc_info=True)
+                        errores+=1
+                        continue
+                    
+                    if departamentos in("IT","Informática"):
+                        departamentos = "Tecnología"
+                       
+                    correctos+=1 
+                    lista_limpia.append({
+                        "codigo": codigo,
+                        "nombres":nombres,
+                        "departamento":departamentos,
+                        "salario_bruto":salario_bruto
+                    })
+                except Exception as Error:
+                    errores+=1
+                    logging.error("Error presentado", exc_info=True)
+                
+                    
+        print(f"Reporte, se procesaron {correctos} filas correctas. Se encontraron {errores} errores. Ver Log")
         return lista_limpia   
             
             
@@ -45,7 +67,7 @@ def limpiezaDatos(archivo):
         
         
 resultado = limpiezaDatos(archivo)
-#print("Esto es lo viejo", resultado)
+#print("Lista limpia", resultado)
 
 def logicaNegocio(resultado):
     lista_correcion_salario = []
