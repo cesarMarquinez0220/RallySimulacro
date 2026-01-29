@@ -4,6 +4,7 @@ import csv
 import mysql.connector
 from pathlib import Path
 import logging
+from datetime import datetime
 
 load_dotenv()
 #Configuracion basica para los logs
@@ -71,6 +72,8 @@ resultado = limpiezaDatos(archivo)
 
 def logicaNegocio(resultado):
     lista_correcion_salario = []
+    local_datetime = datetime.now()
+    formatted_time = local_datetime.strftime("%Y-%m-%d")
     
     for fila in resultado:
         codigo = fila['codigo']
@@ -84,7 +87,9 @@ def logicaNegocio(resultado):
             "codigo": codigo,
             "nombres":nombres,
             "departamento":departamentos,
-            "salario_neto":calculo_salario_neto
+            "salario_neto":calculo_salario_neto,
+            "fecha_proceso":formatted_time
+            
             
         })
     
@@ -96,7 +101,7 @@ negocio=logicaNegocio(resultado)
 def upsert(host,username,pasword,database,negocio):
     cnx = None    
     sentencia_select = "SELECT id FROM empleados WHERE codigo_empleado = %s"
-    sentencia_insert = "INSERT INTO empleados (codigo_empleado,nombre_completo,departamwnto,salario_neto) VALUES (%s, %s, %s, %s)"
+    sentencia_insert = "INSERT INTO empleados (codigo_empleado,nombre_completo,departamwnto,salario_neto,fecha_proceso) VALUES (%s, %s, %s, %s,%s)"
     sentencia_update = "UPDATE empleados SET salario_neto  = %s WHERE codigo_empleado = %s "
     
     actualizados = 0
@@ -118,6 +123,7 @@ def upsert(host,username,pasword,database,negocio):
             nombresCompletos = fila['nombres']
             departamento = fila['departamento']
             salarioNeto = float(fila['salario_neto'])
+            fechaReporte = fila['fecha_proceso']
             cursor.execute(sentencia_select,(codigo,))
             seleccion=cursor.fetchone()
             
@@ -125,7 +131,7 @@ def upsert(host,username,pasword,database,negocio):
                 cursor.execute(sentencia_update,(salarioNeto,codigo))
                 actualizados+=1
             elif seleccion ==None:
-                cursor.execute(sentencia_insert,(codigo,nombresCompletos,departamento,salarioNeto))
+                cursor.execute(sentencia_insert,(codigo,nombresCompletos,departamento,salarioNeto,fechaReporte))
                 insertados+=1
             else:
                 print("Algo salio mal en el select")

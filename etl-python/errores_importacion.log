@@ -22,3 +22,15 @@ Traceback (most recent call last):
   File "/Users/gitce/Desktop/RallySimulacro/etl-python/main.py", line 39, in limpiezaDatos
     salario_bruto = float(fila['salario_neto'])
 ValueError: could not convert string to float: ' '
+2026-01-29 18:14:44,458 - ERROR - Fila saltada por datos incompletos
+NoneType: None
+2026-01-29 18:14:44,459 - ERROR - Error presentado
+Traceback (most recent call last):
+  File "/Users/gitce/Desktop/RallySimulacro/etl-python/main.py", line 40, in limpiezaDatos
+    salario_bruto = float(fila['salario_neto'])
+ValueError: could not convert string to float: 'Mil Quinientos'
+2026-01-29 18:14:44,459 - ERROR - Error presentado
+Traceback (most recent call last):
+  File "/Users/gitce/Desktop/RallySimulacro/etl-python/main.py", line 40, in limpiezaDatos
+    salario_bruto = float(fila['salario_neto'])
+ValueError: could not convert string to float: ' '
